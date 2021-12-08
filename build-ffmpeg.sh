@@ -24,7 +24,7 @@ DEPLOYMENT_TARGET="8.0"
 # LAME=$(pwd)/extend/lame-ios
 
 # 编译FFmpeg版本
-FFMPEG_VERSION="1.2.12"
+FFMPEG_VERSION="3.0.9"
 
 if [[ $FFMPEG_VERSION != "" ]]; then
 	FFMPEG_VERSION=$FFMPEG_VERSION
