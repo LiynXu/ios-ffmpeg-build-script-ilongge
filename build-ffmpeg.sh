@@ -6,12 +6,14 @@ current_path=$(
 echo $current_path
 cd $current_path
 
-#i386 抛弃吧
-#armv7 也抛弃吧
-#x86_64 Intel专用 M1模拟器也是ARM64的
-#arm64
+# i386 抛弃吧
+# armv7 也抛弃吧
+# x86_64 Intel专用 M1模拟器也是ARM64的
+# arm64
 
+# 选择编译架构
 ARCHS="x86_64 arm64"
+# 最低支持版本 2021年了建议iOS11起
 DEPLOYMENT_TARGET="8.0"
 
 # 都是已经编译过的插件的相对路径 没事别瞎改哦
@@ -21,7 +23,7 @@ DEPLOYMENT_TARGET="8.0"
 # OpenSSL=$(pwd)/extend/openssl-ios
 # LAME=$(pwd)/extend/lame-ios
 
-# directories
+# 编译FFmpeg版本
 FFMPEG_VERSION="4.4.1"
 
 if [[ $FFMPEG_VERSION != "" ]]; then
