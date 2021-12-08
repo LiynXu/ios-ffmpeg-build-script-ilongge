@@ -24,7 +24,7 @@ DEPLOYMENT_TARGET="8.0"
 # LAME=$(pwd)/extend/lame-ios
 
 # 编译FFmpeg版本
-FFMPEG_VERSION="4.3.2"
+FFMPEG_VERSION="4.3.3"
 
 if [[ $FFMPEG_VERSION != "" ]]; then
 	FFMPEG_VERSION=$FFMPEG_VERSION
@@ -291,6 +291,7 @@ if [ "$LIPO" ]; then
 	cp -rf $THIN/$1/include $FAT
 fi
 
-echo
-echo Congratulations ! ! !
-echo Build FFMpeg-$FFMPEG_VERSION-iOS Success ! ! !
+echo +++++++++++++++++++++++++++++++++++++++++++++++++++++
+echo +  Congratulations ! ! !                            +
+echo +  Build FFMpeg-$FFMPEG_VERSION-iOS Success ! ! !   +
+echo +++++++++++++++++++++++++++++++++++++++++++++++++++++
