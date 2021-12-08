@@ -41,7 +41,9 @@ FFMPEG_VERSION="4.4.1"
 进入到当前目录直接执行脚本即可，如遇无法执行，可能是文件权限问题
 
 ```
-ilongge@ilonggedeMBP ios-ffmpeg-build-script-ilongge % ./build-ffmpeg.sh   
+cd ios-ffmpeg-build-script-ilongge
+./build-ffmpeg.sh   
+
 ```
 
 
