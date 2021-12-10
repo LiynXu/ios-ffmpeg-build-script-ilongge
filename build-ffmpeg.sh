@@ -112,6 +112,7 @@ if [ "$COMPILE" ]; then
 		echo 'Trying to download from '$SOURCE_URL
 		curl $SOURCE_URL | tar xj ||
 			exit 1
+		echo mv ffmpeg-$FFMPEG_VERSION FFmpeg/FFmpeg-$FFMPEG_VERSION
 		mv ffmpeg-$FFMPEG_VERSION FFmpeg/FFmpeg-$FFMPEG_VERSION
 	fi
 
