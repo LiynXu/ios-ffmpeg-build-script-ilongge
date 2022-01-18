@@ -14,7 +14,7 @@ cd $current_path
 # 选择编译架构
 ARCHS="x86_64 arm64"
 # 最低支持版本 2021年了建议iOS11起
-DEPLOYMENT_TARGET="8.0"
+DEPLOYMENT_TARGET="13.0"
 
 # 都是已经编译过的插件的相对路径 没事别瞎改哦
 # X264=$(pwd)/extend/x264-ios
@@ -24,7 +24,7 @@ DEPLOYMENT_TARGET="8.0"
 # LAME=$(pwd)/extend/lame-ios
 
 # 编译FFmpeg版本
-FFMPEG_VERSION="4.4.1"
+FFMPEG_VERSION="5.0"
 
 if [[ $FFMPEG_VERSION != "" ]]; then
 	FFMPEG_VERSION=$FFMPEG_VERSION
@@ -121,7 +121,11 @@ if [ "$COMPILE" ]; then
 		echo "building $ARCH..."
 		mkdir -p "$SCRATCH/$ARCH"
 		cd "$SCRATCH/$ARCH"
-
+		# 5.0起编译不再支持iOS 13以下
+		VERSION_NEMBER=$(echo $FFMPEG_VERSION | awk '{print int($0)}')
+		if [ $VERSION_NEMBER -ge 5 ]; then
+			DEPLOYMENT_TARGET="13.0"
+		fi
 		CFLAGS="-arch $ARCH"
 		if [ "$ARCH" = "i386" -o "$ARCH" = "x86_64" ]; then
 			PLATFORM="iPhoneSimulator"
@@ -133,7 +137,11 @@ if [ "$COMPILE" ]; then
 				EXPORT="GASPP_FIX_XCODE5=1"
 			fi
 		fi
-
+		# 4.4起编译带有audiotoolbox的会报错 故按照issue关闭audiotoolbox
+		y_or_n=$(echo $FFMPEG_VERSION "4.3" | awk '{if($1 > $2) print 1; else print 0;}')
+		if [ $y_or_n -eq 1 ]; then
+			CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-audiotoolbox"
+		fi
 		XCRUN_SDK=$(echo $PLATFORM | tr '[:upper:]' '[:lower:]')
 		CC="xcrun -sdk $XCRUN_SDK clang"
 
@@ -171,11 +179,7 @@ if [ "$COMPILE" ]; then
 			CFLAGS="$CFLAGS -I$LAME/include"
 			LDFLAGS="$LDFLAGS -L$LAME/lib"
 		fi
-		# 4.4起编译带有audiotoolbox的会报错 故按照issue关闭audiotoolbox
-		y_or_n=$(echo $FFMPEG_VERSION "4.3" | awk '{if($1 > $2) print 1; else print 0;}')
-		if [ $y_or_n -eq 1 ]; then
-			CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-audiotoolbox"
-		fi
+
 		TMPDIR=${TMPDIR/%\//} $CWD/FFmpeg/$SOURCE/configure \
 			--target-os=darwin \
 			--arch=$ARCH \
