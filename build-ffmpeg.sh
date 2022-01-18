@@ -13,8 +13,8 @@ cd $current_path
 
 # 选择编译架构
 ARCHS="x86_64 arm64"
-# 最低支持版本 2021年了建议iOS11起
-DEPLOYMENT_TARGET="13.0"
+# 最低支持版本 2022年了建议iOS11起
+DEPLOYMENT_TARGET="11.0"
 
 # 都是已经编译过的插件的相对路径 没事别瞎改哦
 # X264=$(pwd)/extend/x264-ios
@@ -122,8 +122,8 @@ if [ "$COMPILE" ]; then
 		mkdir -p "$SCRATCH/$ARCH"
 		cd "$SCRATCH/$ARCH"
 		# 5.0起编译不再支持iOS 13以下
-		VERSION_NEMBER=$(echo $FFMPEG_VERSION | awk '{print int($0)}')
-		if [ $VERSION_NEMBER -ge 5 ]; then
+		y_or_n=$(echo $FFMPEG_VERSION "5.0" | awk '{if($1 >= $2) print 1; else print 0;}')
+		if [ $y_or_n -eq 1 ]; then
 			DEPLOYMENT_TARGET="13.0"
 		fi
 		CFLAGS="-arch $ARCH"
@@ -137,8 +137,8 @@ if [ "$COMPILE" ]; then
 				EXPORT="GASPP_FIX_XCODE5=1"
 			fi
 		fi
-		# 4.4起编译带有audiotoolbox的会报错 故按照issue关闭audiotoolbox
-		y_or_n=$(echo $FFMPEG_VERSION "4.3" | awk '{if($1 > $2) print 1; else print 0;}')
+		# 4.4起编译需关闭audiotoolbox
+		y_or_n=$(echo $FFMPEG_VERSION "4.4" | awk '{if($1 >= $2) print 1; else print 0;}')
 		if [ $y_or_n -eq 1 ]; then
 			CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-audiotoolbox"
 		fi

@@ -2,13 +2,14 @@
 
 ## 测试环境:
 
-* FFmpeg 4.4.1
-* Xcode 13.1 (13A1030d)
+* FFmpeg 5.0
+* Xcode 13.2.1 (13C100)
 * MacOS 11.6.1 (20G221)
 
 ## 注意事项
 
-* 4.4目前无法编译Audiotoolbox，代码中也有写。建议编译4.3.2即可
+* 4.4+ 无法编译Audiotoolbox
+* 5.0+ 仅支持iOS13及以上
 
 ## 编译依赖
 
@@ -27,21 +28,22 @@
 
 # 选择编译架构
 ARCHS="x86_64 arm64"
-# 最低支持版本 2021年了建议iOS11起
-DEPLOYMENT_TARGET="8.0"
+# 最低支持版本 2022年了建议iOS11起
+DEPLOYMENT_TARGET="11.0"
 ```
 
 设定编译FFMpeg版本
 
 ```
 # 编译FFmpeg版本
-FFMPEG_VERSION="4.4.1"
+FFMPEG_VERSION="5.0"
 ```
 
 进入到当前目录直接执行脚本即可，如遇无法执行，可能是文件权限问题
 
 ```
 cd ios-ffmpeg-build-script-ilongge
+chmod +x build-ffmpeg.sh
 ./build-ffmpeg.sh   
 
 ```
@@ -61,3 +63,6 @@ cd ios-ffmpeg-build-script-ilongge
 学习后加以改造
 
 感谢原作者！！！
+
+[Gitee仓库](https://gitee.com/ilongge/ios-ffmpeg-build-script-ilongge.git)
+[Github仓库](https://github.com/ilongge/ios-ffmpeg-build-script-ilongge.git)
