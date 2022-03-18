@@ -6,10 +6,10 @@ current_path=$(
 echo $current_path
 cd $current_path
 
-# i386 抛弃吧
-# armv7 也抛弃吧
-# x86_64 Intel专用 M1模拟器也是ARM64的
-# arm64
+# i386      抛弃吧
+# armv7     也抛弃吧
+# x86_64    Intel版Macbook的Xcode模拟器专用 M1版的Xcode模拟器是ARM64的
+# arm64     目前主流的ios设备架构
 
 # 选择编译架构
 ARCHS="x86_64 arm64"
@@ -19,12 +19,13 @@ DEPLOYMENT_TARGET="11.0"
 # 都是已经编译过的插件的相对路径 没事别瞎改哦
 # X264=$(pwd)/extend/x264-ios
 # X265=$(pwd)/extend/x265-ios
+# X265=$(pwd)/extend/libx265-ios
 # FDK_AAC=$(pwd)/extend/fdk-aac-ios
 # OpenSSL=$(pwd)/extend/openssl-ios
 # LAME=$(pwd)/extend/lame-ios
 
 # 编译FFmpeg版本
-FFMPEG_VERSION="5.0"
+FFMPEG_VERSION="4.3.3"
 
 if [[ $FFMPEG_VERSION != "" ]]; then
 	FFMPEG_VERSION=$FFMPEG_VERSION
@@ -38,38 +39,48 @@ echo "Current_Path         = $(pwd)"
 echo "Build_FFmpeg_Version = $FFMPEG_VERSION"
 echo "Build_FFmpeg_ARCHS   = $ARCHS"
 
-CONFIGURE_FLAGS="--enable-cross-compile --disable-debug --disable-programs --disable-doc --enable-pic"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-cross-compile"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-ffplay"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-ffprobe"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-debug"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-programs"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-doc"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-htmlpages"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-manpages"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-podpages"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-txtpages"
 
-if [ $X264 -o $X265 ]; then
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-pic"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-static"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-shared"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-small"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-postproc"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-avresample"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-hwaccels"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-videotoolbox"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-swscale-alpha"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-protocol=http"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-protocol=hls"
 
-	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-gpl"
-
-	if [ "$X264" ]; then
-		CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-libx264 --enable-encoder=libx264"
-	fi
-	if [ "$X265" ]; then
-		CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-libx265  --enable-encoder=libx265"
-	fi
+if [ "$X264" ]; then
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-libx264 --enable-encoder=libx264 --enable-gpl"
 fi
-if [ $FDK_AAC -o $OpenSSL ]; then
 
-	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-nonfree"
+if [ "$X265" ]; then
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-libx265  --enable-encoder=libx265 --enable-gpl"
+fi
 
-	if [ "$FDK_AAC" ]; then
-		CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-libfdk_aac --enable-encoder=libfdk_aac"
-	fi
+if [ "$FDK_AAC" ]; then
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-libfdk_aac --enable-encoder=libfdk_aac --enable-nonfree"
+fi
 
-	if [ "$OpenSSL" ]; then
-		CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-openssl --enable-protocol=http --enable-protocol=https --enable-protocol=hls"
-	fi
+if [ "$OpenSSL" ]; then
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-openssl --enable-protocol=https --enable-nonfree"
 fi
 
 if [ "$LAME" ]; then
 	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-libmp3lame --enable-encoder=libmp3lame"
 fi
-
-# # avresample
-# #CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-avresample"
 
 COMPILE="y"
 LIPO="y"
@@ -126,9 +137,13 @@ if [ "$COMPILE" ]; then
 		if [ $y_or_n -eq 1 ]; then
 			DEPLOYMENT_TARGET="13.0"
 		fi
+		ARCH_OPTIONS=""
+		NEON_FLAG=""
 		CFLAGS="-arch $ARCH"
 		if [ "$ARCH" = "i386" -o "$ARCH" = "x86_64" ]; then
 			PLATFORM="iPhoneSimulator"
+			NEON_FLAG="$NEON_FLAG --disable-neon"
+			ARCH_OPTIONS="$ARCH_OPTIONS --disable-asm"
 			CFLAGS="$CFLAGS -mios-simulator-version-min=$DEPLOYMENT_TARGET"
 		else
 			PLATFORM="iPhoneOS"
@@ -136,6 +151,8 @@ if [ "$COMPILE" ]; then
 			if [ "$ARCH" = "arm64" ]; then
 				EXPORT="GASPP_FIX_XCODE5=1"
 			fi
+			NEON_FLAG="$NEON_FLAG --enable-neon"
+			ARCH_OPTIONS="$ARCH_OPTIONS --enable-asm"
 		fi
 		# 4.4起编译需关闭audiotoolbox
 		y_or_n=$(echo $FFMPEG_VERSION "4.4" | awk '{if($1 >= $2) print 1; else print 0;}')
@@ -147,9 +164,9 @@ if [ "$COMPILE" ]; then
 
 		# force "configure" to use "gas-preprocessor.pl" (FFmpeg 3.3)
 		if [ "$ARCH" = "arm64" ]; then
-			AS="gas-preprocessor.pl -arch aarch64 -- $CC"
+			AS="gas-preprocessor.pl -arch aarch64 --$CC"
 		else
-			AS="gas-preprocessor.pl -- $CC"
+			AS="gas-preprocessor.pl --$CC"
 		fi
 
 		CXXFLAGS="$CFLAGS"
@@ -180,16 +197,6 @@ if [ "$COMPILE" ]; then
 			LDFLAGS="$LDFLAGS -L$LAME/lib"
 		fi
 
-		TMPDIR=${TMPDIR/%\//} $CWD/FFmpeg/$SOURCE/configure \
-			--target-os=darwin \
-			--arch=$ARCH \
-			--cc="$CC" \
-			--as="$AS" \
-			$CONFIGURE_FLAGS \
-			--extra-cflags="$CFLAGS" \
-			--extra-ldflags="$LDFLAGS" \
-			--prefix="$THIN/$ARCH" ||
-			exit 1
 		#输出详细编译信息
 		echo ./configure /
 		echo "\t"--target-os=darwin
@@ -211,6 +218,18 @@ if [ "$COMPILE" ]; then
 		done
 		echo "\n"
 		echo --prefix="$THIN/$ARCH"
+
+		TMPDIR=${TMPDIR/%\//} $CWD/FFmpeg/$SOURCE/configure \
+			--target-os=darwin \
+			--arch=$ARCH \
+			--cc="$CC" \
+			--as="$AS" \
+			$CONFIGURE_FLAGS \
+			--extra-cflags="$CFLAGS" \
+			--extra-ldflags="$LDFLAGS" \
+			--prefix="$THIN/$ARCH" ||
+			exit 1
+
 		#获取机器CPU核心数 就可能加快编译
 		THREAD_COUNT=$(sysctl -n machdep.cpu.thread_count)
 		echo "make -j $THREAD_COUNT install $EXPORT || exit 1"
@@ -295,7 +314,9 @@ if [ "$LIPO" ]; then
 	cd $CWD
 	cp -rf $THIN/$1/include $FAT
 fi
-
+echo "开始清理编译生成的中间文件"
+make clean
+echo "清理完成"
 echo "+++++++++++++++++++++++++++++++++++++++++++++++++++++"
 echo "+  Congratulations ! ! !                            +"
 echo "+  Build FFMpeg-iOS Success ! ! !                   +"

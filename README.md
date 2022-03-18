@@ -65,4 +65,3 @@ chmod +x build-ffmpeg.sh
 感谢原作者！！！
 
 [Gitee仓库](https://gitee.com/ilongge/ios-ffmpeg-build-script-ilongge.git)
-[Github仓库](https://github.com/ilongge/ios-ffmpeg-build-script-ilongge.git)
