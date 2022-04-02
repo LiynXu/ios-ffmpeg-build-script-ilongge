@@ -4,7 +4,7 @@
 
 * FFmpeg 5.0
 * Xcode 13.2.1 (13C100)
-* MacOS 11.6.1 (20G221)
+* MacOS 11.6.5 (20G527)
 
 ## 注意事项
 
@@ -28,8 +28,12 @@
 
 # 选择编译架构
 ARCHS="x86_64 arm64"
+```
+设定最低支持的系统版本
+
+```
 # 最低支持版本 2022年了建议iOS11起
-DEPLOYMENT_TARGET="11.0"
+DEPLOYMENT_TARGET="13.0"
 ```
 
 设定编译FFMpeg版本
