@@ -1,6 +1,5 @@
 #!/bin/sh
 
-CONFIGURE_FLAGS="--enable-static --with-pic=yes --disable-shared"
 
 ARCHS="arm64 x86_64 i386 armv7"
 
@@ -11,6 +10,8 @@ FAT="fdk-aac-ios"
 SCRATCH="scratch"
 # must be an absolute path
 THIN=`pwd`/"thin"
+
+CONFIGURE_FLAGS="--enable-static --with-pic=yes --disable-shared"
 
 COMPILE="y"
 LIPO="y"

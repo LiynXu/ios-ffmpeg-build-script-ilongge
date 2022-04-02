@@ -17,11 +17,11 @@ ARCHS="x86_64 arm64"
 DEPLOYMENT_TARGET="11.0"
 
 # 都是已经编译过的插件的相对路径 没事别瞎改哦
-# X264=$(pwd)/extend/x264-ios
+X264=$(pwd)/extend/x264-ios
 # X265=$(pwd)/extend/x265-ios
 # X265=$(pwd)/extend/libx265-ios
 # FDK_AAC=$(pwd)/extend/fdk-aac-ios
-# OpenSSL=$(pwd)/extend/openssl-ios
+OpenSSL=$(pwd)/extend/openssl-ios
 # LAME=$(pwd)/extend/lame-ios
 
 # 编译FFmpeg版本
@@ -63,23 +63,32 @@ CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-protocol=http"
 CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-protocol=hls"
 
 if [ "$X264" ]; then
-	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-libx264 --enable-encoder=libx264 --enable-gpl"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-libx264"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-encoder=libx264"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-gpl"
 fi
 
 if [ "$X265" ]; then
-	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-libx265  --enable-encoder=libx265 --enable-gpl"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-libx265"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-encoder=libx265"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-gpl"
 fi
 
 if [ "$FDK_AAC" ]; then
-	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-libfdk_aac --enable-encoder=libfdk_aac --enable-nonfree"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-libfdk_aac"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-encoder=libfdk_aac"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-nonfree"
 fi
 
 if [ "$OpenSSL" ]; then
-	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-openssl --enable-protocol=https --enable-nonfree"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-openssl"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-protocol=https"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-nonfree"
 fi
 
 if [ "$LAME" ]; then
-	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-libmp3lame --enable-encoder=libmp3lame"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-libmp3lame"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-encoder=libmp3lame"
 fi
 
 COMPILE="y"
@@ -164,9 +173,9 @@ if [ "$COMPILE" ]; then
 
 		# force "configure" to use "gas-preprocessor.pl" (FFmpeg 3.3)
 		if [ "$ARCH" = "arm64" ]; then
-			AS="gas-preprocessor.pl -arch aarch64 --$CC"
+			AS="gas-preprocessor.pl -arch aarch64 -- $CC"
 		else
-			AS="gas-preprocessor.pl --$CC"
+			AS="gas-preprocessor.pl -- $CC"
 		fi
 
 		CXXFLAGS="$CFLAGS"
@@ -218,16 +227,20 @@ if [ "$COMPILE" ]; then
 		done
 		echo "\n"
 		echo --prefix="$THIN/$ARCH"
+		echo $NEON_FLAG
+		echo $ARCH_OPTIONS
 
 		TMPDIR=${TMPDIR/%\//} $CWD/FFmpeg/$SOURCE/configure \
 			--target-os=darwin \
 			--arch=$ARCH \
 			--cc="$CC" \
 			--as="$AS" \
-			$CONFIGURE_FLAGS \
 			--extra-cflags="$CFLAGS" \
 			--extra-ldflags="$LDFLAGS" \
-			--prefix="$THIN/$ARCH" ||
+			--prefix="$THIN/$ARCH" \
+			$CONFIGURE_FLAGS \
+			$NEON_FLAG \
+			$ARCH_OPTIONS ||
 			exit 1
 
 		#获取机器CPU核心数 就可能加快编译
