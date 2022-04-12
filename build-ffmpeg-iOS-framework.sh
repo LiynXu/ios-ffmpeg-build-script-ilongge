@@ -2,24 +2,24 @@
 
 # directories
 
-ARCHS="arm64 x86_64"
+ARCHS="armv7 arm64 x86_64"
 
 FFMPEG_VERSION="4.3.3"
 export FFMPEG_VERSION
-SCRATCH=$(pwd)/"scratch-$FFMPEG_VERSION"
+SCRATCH=$(pwd)/"FFMpeg/scratch-$FFMPEG_VERSION"
 HEADER_SUFFIX=".h"
 CURRENT_FOLDER=$(pwd)
 FRAMEWORK_NAME="FFmpeg"
 FRAMEWORK_EXT=".framework"
 FRAMEWORK="$FRAMEWORK_NAME$FRAMEWORK_EXT"
-BUILD_FOLDER="$CURRENT_FOLDER/FFmpeg/FFmpeg-$FFMPEG_VERSION-iOS"
-BUILD_THIN_FOLDER="$CURRENT_FOLDER/FFmpeg/thin-$FFMPEG_VERSION"
+BUILD_FOLDER="$CURRENT_FOLDER/FFMpeg/FFmpeg-$FFMPEG_VERSION-iOS"
+BUILD_THIN_FOLDER="$CURRENT_FOLDER/FFMpeg/thin-$FFMPEG_VERSION"
 BUILD_INCLUDE_FOLDER="$BUILD_FOLDER/include"
 BUILD_LIB_FOLDER="$BUILD_FOLDER/lib"
-OUTPUT_FOLDER="$CURRENT_FOLDER/FFmpeg/$FRAMEWORK"
+OUTPUT_FOLDER="$CURRENT_FOLDER/FFMpeg/$FRAMEWORK"
 OUTPUT_INFO_PLIST_FILE="$OUTPUT_FOLDER/Info.plist"
 OUTPUT_HEADER_FOLDER="$OUTPUT_FOLDER/Headers"
-OUTPUT_UMBRELLA_HEADER="$OUTPUT_HEADER_FOLDER/ffmpeg.h"
+OUTPUT_UMBRELLA_HEADER="$OUTPUT_HEADER_FOLDER/FFMpeg.h"
 OUTPUT_MODULES_FOLDER="$OUTPUT_FOLDER/Modules"
 OUTPUT_MODULES_FILE="$OUTPUT_MODULES_FOLDER/module.modulemap"
 VERSION_NEW_NAME="Version.h"
@@ -40,22 +40,24 @@ function MergeStaticLibrary() {
 
   for ARCH in $ARCHS; do
     folder="$SCRATCH/$ARCH"
-    name="$FRAMEWORK_NAME$ARCH.a"
+    name="$FRAMEWORK_NAME""_""$ARCH.a"
     echo $folder
     ar cru $name $(find $folder -name "*.o")
     files="$files $name"
   done
   echo $files
-  lipo -create $files -output FFmpeg
+  echo "lipo -create $files -output $FRAMEWORK_NAME"
+  lipo -create $files -output $FRAMEWORK_NAME.a
 
   for file in $files; do
     rm -rf $file
   done
-  mv $FRAMEWORK_NAME $OUTPUT_FOLDER
+  echo "mv $FRAMEWORK_NAME $OUTPUT_FOLDER"
+  mv $FRAMEWORK_NAME.a $OUTPUT_FOLDER/$FRAMEWORK_NAME
 }
 
 function RenameHeader() {
-  local include_folder="$(pwd)/FFmpeg-iOS/include"
+  local include_folder="$BUILD_FOLDER/include"
   local need_replace_version_folder=""
   for folder in "$include_folder"/*; do
     local folder_name=$(basename $folder)
@@ -71,6 +73,7 @@ function RenameHeader() {
       local dst_folder=$OUTPUT_HEADER_FOLDER
       local file_name="$folder/$header_name"
       local dst_file_name="$dst_folder/$dst_name"
+      echo "cp $file_name $dst_file_name"
       cp $file_name $dst_file_name
       find "$dst_folder" -name "$dst_name" -type f -exec sed -i '' "s/\"version.h\"/\"$verstion_file_name\"/g" {} \;
     done
@@ -99,13 +102,17 @@ function CreateModulemapAndUmbrellaHeader() {
 #import <Foundation/Foundation.h>
 #import <VideoToolbox/VideoToolbox.h>
 #import <AudioToolbox/AudioToolbox.h>
-#include "avcodec.h"
-#include "avdevice.h"
-#include "avfilter.h"
-#include "avformat.h"
-#include "avutil.h"
-#include "swscale.h"
-#include "swresample.h"
+#include <FFmpeg/avcodec.h>
+#include <FFmpeg/avdevice.h>
+#include <FFmpeg/avfilter.h>
+#include <FFmpeg/avformat.h>
+#include <FFmpeg/avutil.h>
+#include <FFmpeg/swscale.h>
+#include <FFmpeg/swresample.h>
+#include <FFmpeg/imgutils.h>
+#include <FFmpeg/display.h>
+#include <FFmpeg/eval.h>
+#include <FFmpeg/ffversion.h>
 double FFmpegVersionNumber = $FFMPEG_VERSION;
 EOF
 

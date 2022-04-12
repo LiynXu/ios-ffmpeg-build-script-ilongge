@@ -12,16 +12,17 @@ cd $current_path
 # arm64     目前主流的ios设备架构
 
 # 选择编译架构
-ARCHS="x86_64 arm64"
+ARCHS="armv7 arm64 x86_64"
+
 # 最低支持版本 2022年了建议iOS11起
-DEPLOYMENT_TARGET="11.0"
+DEPLOYMENT_TARGET="9.0"
 
 # 都是已经编译过的插件的相对路径 没事别瞎改哦
-X264=$(pwd)/extend/x264-ios
+# X264=$(pwd)/extend/x264-ios
 # X265=$(pwd)/extend/x265-ios
 # X265=$(pwd)/extend/libx265-ios
 # FDK_AAC=$(pwd)/extend/fdk-aac-ios
-OpenSSL=$(pwd)/extend/openssl-ios
+# OpenSSL=$(pwd)/extend/openssl-ios
 # LAME=$(pwd)/extend/lame-ios
 
 # 编译FFmpeg版本
@@ -39,6 +40,8 @@ echo "Current_Path         = $(pwd)"
 echo "Build_FFmpeg_Version = $FFMPEG_VERSION"
 echo "Build_FFmpeg_ARCHS   = $ARCHS"
 
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-static"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-shared"
 CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-cross-compile"
 CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-ffplay"
 CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-ffprobe"
@@ -51,16 +54,74 @@ CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-podpages"
 CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-txtpages"
 
 CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-pic"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-static"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-shared"
 CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-small"
 CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-postproc"
 CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-avresample"
 CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-hwaccels"
 CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-videotoolbox"
 CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-swscale-alpha"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-protocol=http"
+
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-encoders"
+
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-decoders"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=mpeg4"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=aac"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=ac3"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=h264"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=mp3float"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=mpeg1video"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=mp2float"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=mjpeg"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=hevc" 
+
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-muxers"
+
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-demuxers"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=mpegts"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=mpegps"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=mpegvideo"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=mpeg1video"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-parser=mpegvideo"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=mpegps"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=mpegvideo"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=flv"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=avi"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=mov"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=m4v"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=h263"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=h264"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=hevc"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=aac"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=mp3"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=ac3"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=image2"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=matroska"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=dts"
+
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-protocols"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-protocol=file"
 CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-protocol=hls"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-protocol=rtp"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-protocol=rtmp"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-protocol=rtmpt"
+
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-indevs"
+
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-parsers"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-parser=aac"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-parser=aac_latm"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-parser=h263"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-parser=h264"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-parser=hevc"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-parser=mpegvideo"
+
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-filters"  
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-filter=aformat"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-filter=aresample"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-filter=volume"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-filter=scale"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-filter=transpose"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-filter=acrossfade"
 
 if [ "$X264" ]; then
 	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-libx264"
@@ -327,9 +388,7 @@ if [ "$LIPO" ]; then
 	cd $CWD
 	cp -rf $THIN/$1/include $FAT
 fi
-echo "开始清理编译生成的中间文件"
-make clean
-echo "清理完成"
+
 echo "+++++++++++++++++++++++++++++++++++++++++++++++++++++"
 echo "+  Congratulations ! ! !                            +"
 echo "+  Build FFMpeg-iOS Success ! ! !                   +"
