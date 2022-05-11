@@ -2,10 +2,11 @@
 
 # directories
 
-ARCHS="armv7 arm64 x86_64"
 
-FFMPEG_VERSION="4.3.3"
+
+FFMPEG_VERSION="5.0.1"
 export FFMPEG_VERSION
+ARCHS="arm64 x86_64" 
 SCRATCH=$(pwd)/"FFMpeg/scratch-$FFMPEG_VERSION"
 HEADER_SUFFIX=".h"
 CURRENT_FOLDER=$(pwd)
@@ -19,7 +20,7 @@ BUILD_LIB_FOLDER="$BUILD_FOLDER/lib"
 OUTPUT_FOLDER="$CURRENT_FOLDER/FFMpeg/$FRAMEWORK"
 OUTPUT_INFO_PLIST_FILE="$OUTPUT_FOLDER/Info.plist"
 OUTPUT_HEADER_FOLDER="$OUTPUT_FOLDER/Headers"
-OUTPUT_UMBRELLA_HEADER="$OUTPUT_HEADER_FOLDER/FFMpeg.h"
+OUTPUT_UMBRELLA_HEADER="$OUTPUT_HEADER_FOLDER/$FRAMEWORK_NAME.h"
 OUTPUT_MODULES_FOLDER="$OUTPUT_FOLDER/Modules"
 OUTPUT_MODULES_FILE="$OUTPUT_MODULES_FOLDER/module.modulemap"
 VERSION_NEW_NAME="Version.h"
@@ -46,12 +47,12 @@ function MergeStaticLibrary() {
     files="$files $name"
   done
   echo $files
-  echo "lipo -create $files -output $FRAMEWORK_NAME"
+  echo "lipo -create $files -output $FRAMEWORK_NAME.a"
   lipo -create $files -output $FRAMEWORK_NAME.a
 
-  for file in $files; do
-    rm -rf $file
-  done
+  # for file in $files; do
+  #   rm -rf $file
+  # done
   echo "mv $FRAMEWORK_NAME $OUTPUT_FOLDER"
   mv $FRAMEWORK_NAME.a $OUTPUT_FOLDER/$FRAMEWORK_NAME
 }
@@ -113,12 +114,12 @@ function CreateModulemapAndUmbrellaHeader() {
 #include <FFmpeg/display.h>
 #include <FFmpeg/eval.h>
 #include <FFmpeg/ffversion.h>
-double FFmpegVersionNumber = $FFMPEG_VERSION;
+#define FFmpegVersionNumber  @"$FFMPEG_VERSION"
 EOF
 
   cat >$OUTPUT_MODULES_FILE <<EOF
 framework module $FRAMEWORK_NAME {
-  umbrella header "ffmpeg.h"
+  umbrella header "$FRAMEWORK_NAME.h"
   export *
   module * { export * }
 }

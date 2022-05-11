@@ -6,16 +6,8 @@ current_path=$(
 echo $current_path
 cd $current_path
 
-# i386      抛弃吧
-# armv7     也抛弃吧
-# x86_64    Intel版Macbook的Xcode模拟器专用 M1版的Xcode模拟器是ARM64的
-# arm64     目前主流的ios设备架构
-
-# 选择编译架构
-ARCHS="armv7 arm64 x86_64"
-
-# 最低支持版本 2022年了建议iOS11起
-DEPLOYMENT_TARGET="9.0"
+# 单纯为了播放
+OnlyForPlayer=''
 
 # 都是已经编译过的插件的相对路径 没事别瞎改哦
 # X264=$(pwd)/extend/x264-ios
@@ -26,11 +18,32 @@ DEPLOYMENT_TARGET="9.0"
 # LAME=$(pwd)/extend/lame-ios
 
 # 编译FFmpeg版本
-FFMPEG_VERSION="4.3.3"
+FFMPEG_VERSION="5.0.1"
 
 if [[ $FFMPEG_VERSION != "" ]]; then
 	FFMPEG_VERSION=$FFMPEG_VERSION
 fi
+
+# i386      抛弃吧
+# armv7     也抛弃吧
+# x86_64    Intel版Macbook的Xcode模拟器专用 M1版的Xcode模拟器是ARM64的
+# arm64     目前主流的ios设备架构
+
+# 选择编译架构
+ARCHS="armv7 arm64 x86_64"
+
+# 最低支持版本 2022年了建议iOS11起
+DEPLOYMENT_TARGET="9.0"
+# 5.0起编译不再支持iOS 13以下
+ffmpeg5=$(echo $FFMPEG_VERSION "5.0" | awk '{if($1 >= $2) print 1; else print 0;}')
+if [ $ffmpeg5 -eq 1 ]; then
+	DEPLOYMENT_TARGET="13.0"
+fi
+ios11=$(echo $DEPLOYMENT_TARGET "11.0" | awk '{if($1 >= $2) print 1; else print 0;}')
+if [ $ios11 -eq 1 ]; then
+	ARCHS="arm64 x86_64"
+fi
+
 SOURCE="FFmpeg-$FFMPEG_VERSION"
 FAT=$(pwd)"/FFmpeg/FFmpeg-$FFMPEG_VERSION-iOS"
 SCRATCH=$(pwd)"/FFmpeg/scratch-$FFMPEG_VERSION"
@@ -56,72 +69,135 @@ CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-txtpages"
 CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-pic"
 CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-small"
 CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-postproc"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-avresample"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-hwaccels"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-videotoolbox"
+if [ $ffmpeg5 -eq 0 ]; then
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-avresample"
+fi 
 CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-swscale-alpha"
 
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-encoders"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-hwaccels"
+CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-videotoolbox"
 
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-decoders"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=mpeg4"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=aac"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=ac3"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=h264"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=mp3float"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=mpeg1video"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=mp2float"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=mjpeg"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=hevc" 
+if [ "$OnlyForPlayer" ]; then
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-decoders"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=aac"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=aac_latm"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=ac3"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=ass"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=avs"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=bmp"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=eac3"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=flac"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=flv"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=h261"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=h264"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=hevc"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=jpeg2000"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=mp3"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=mp3float"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=mpeg1video"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=mpeg2video"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=mpeg4"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=mp2float"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=mjpeg"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=opus"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=png"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=srt"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=ssa"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=tiff"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=vc1"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=vp7"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=vp8"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=vp9"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=webp"
 
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-muxers"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-encoders"
 
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-demuxers"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=mpegts"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=mpegps"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=mpegvideo"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-decoder=mpeg1video"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-parser=mpegvideo"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=mpegps"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=mpegvideo"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=flv"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=avi"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=mov"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=m4v"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=h263"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=h264"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=hevc"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=aac"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=mp3"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=ac3"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=image2"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=matroska"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=dts"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-parsers"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-parser=aac"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-parser=aac_latm"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-parser=ac3"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-parser=av1"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-parser=avs2"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-parser=bmp"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-parser=flac"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-parser=h261"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-parser=h263"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-parser=h264"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-parser=hevc"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-parser=jpeg2000"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-parser=mpegaudio"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-parser=mpegvideo"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-parser=opus"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-parser=png"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-parser=vc1"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-parser=vp8"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-parser=vp9"
 
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-protocols"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-protocol=file"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-protocol=hls"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-protocol=rtp"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-protocol=rtmp"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-protocol=rtmpt"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-demuxers"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=aac"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=ac3"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=av1"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=avi"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=avs"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=avs2"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=caf"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=data"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=dts"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=dtshd"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=eac3"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=flac"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=flv"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=h261"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=h263"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=h264"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=hevc"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=hls"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=image2"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=m4v"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=matroska"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=mp3"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=mov"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=mpegps"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=mpegts"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=mpegvideo"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=rm"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=rtp"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=rtsp"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=srt"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=vc1"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-demuxer=wav"
 
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-indevs"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-muxers"
 
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-parsers"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-parser=aac"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-parser=aac_latm"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-parser=h263"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-parser=h264"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-parser=hevc"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-parser=mpegvideo"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-protocols"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-protocol=tcp"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-protocol=udp"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-protocol=http"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-protocol=https"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-protocol=file"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-protocol=ftp"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-protocol=hls"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-protocol=tls"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-protocol=ffrtmphttp"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-protocol=rtp"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-protocol=rtmp"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-protocol=rtmpt"
 
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-filters"  
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-filter=aformat"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-filter=aresample"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-filter=volume"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-filter=scale"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-filter=transpose"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-filter=acrossfade"
+	# CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-bsfs"
+
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-indevs"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-indev=avfoundation"
+
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-filters"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-filter=aformat"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-filter=aresample"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-filter=volume"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-filter=scale"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-filter=transpose"
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-filter=acrossfade"
+
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-outdevs"
+fi
 
 if [ "$X264" ]; then
 	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-libx264"
@@ -202,11 +278,7 @@ if [ "$COMPILE" ]; then
 		echo "building $ARCH..."
 		mkdir -p "$SCRATCH/$ARCH"
 		cd "$SCRATCH/$ARCH"
-		# 5.0起编译不再支持iOS 13以下
-		y_or_n=$(echo $FFMPEG_VERSION "5.0" | awk '{if($1 >= $2) print 1; else print 0;}')
-		if [ $y_or_n -eq 1 ]; then
-			DEPLOYMENT_TARGET="13.0"
-		fi
+
 		ARCH_OPTIONS=""
 		NEON_FLAG=""
 		CFLAGS="-arch $ARCH"
@@ -273,20 +345,9 @@ if [ "$COMPILE" ]; then
 		echo "\t"--arch=$ARCH
 		echo "\t"--cc="$CC"
 		echo "\t"--as="$AS"
-		for FLAG in $CONFIGURE_FLAGS; do
-			echo "\t"$FLAG
-		done
-		echo "\n"
-		echo --extra-cflags /
-		for FLAG in $CFLAGS; do
-			echo "\t"$FLAG
-		done
-		echo "\n"
-		echo --extra-ldflags /
-		for FLAG in $LDFLAGS; do
-			echo "\t"$FLAG
-		done
-		echo "\n"
+		echo $CONFIGURE_FLAGS
+		echo --extra-cflags $CFLAGS
+		echo --extra-ldflags $LDFLAGS
 		echo --prefix="$THIN/$ARCH"
 		echo $NEON_FLAG
 		echo $ARCH_OPTIONS
