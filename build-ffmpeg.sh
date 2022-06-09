@@ -18,7 +18,7 @@ OnlyForPlayer=''
 # LAME=$(pwd)/extend/lame-ios
 
 # 编译FFmpeg版本
-FFMPEG_VERSION="5.0.1"
+FFMPEG_VERSION="4.4.2"
 
 if [[ $FFMPEG_VERSION != "" ]]; then
 	FFMPEG_VERSION=$FFMPEG_VERSION
