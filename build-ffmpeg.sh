@@ -9,6 +9,9 @@ cd $current_path
 # 单纯为了播放
 OnlyForPlayer=''
 
+# 静态库
+Static='y'
+
 # 都是已经编译过的插件的相对路径 没事别瞎改哦
 # X264=$(pwd)/extend/x264-ios
 # X265=$(pwd)/extend/x265-ios
@@ -30,7 +33,7 @@ fi
 # arm64     目前主流的ios设备架构
 
 # 选择编译架构
-ARCHS="armv7 arm64 x86_64"
+ARCHS="armv7 arm64 x86_64" 
 
 # 最低支持版本 2022年了建议iOS11起
 DEPLOYMENT_TARGET="9.0"
@@ -39,10 +42,13 @@ ffmpeg5=$(echo $FFMPEG_VERSION "5.0" | awk '{if($1 >= $2) print 1; else print 0;
 if [ $ffmpeg5 -eq 1 ]; then
 	DEPLOYMENT_TARGET="13.0"
 fi
+#移除低版本的Armv7支持
 ios11=$(echo $DEPLOYMENT_TARGET "11.0" | awk '{if($1 >= $2) print 1; else print 0;}')
-if [ $ios11 -eq 1 ]; then
-	ARCHS="arm64 x86_64"
-fi
+if [ $ios11 -eq 1 ]; then 
+	if [[ $ARCHS == *"armv7"* ]]; then
+		ARCHS=$(echo $ARCHS | sed 's/armv7//g')
+	fi
+fi 
 
 SOURCE="FFmpeg-$FFMPEG_VERSION"
 FAT=$(pwd)"/FFmpeg/FFmpeg-$FFMPEG_VERSION-iOS"
@@ -53,13 +59,19 @@ echo "Current_Path         = $(pwd)"
 echo "Build_FFmpeg_Version = $FFMPEG_VERSION"
 echo "Build_FFmpeg_ARCHS   = $ARCHS"
 
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-static"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-shared"
+if [ "$Static" ]; then
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-static"
+else
+	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-shared"
+fi
+
 CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-cross-compile"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-ffplay"
-CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-ffprobe"
 CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-debug"
 CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-programs"
+# CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-ffmpeg"
+# CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-ffplay"
+# CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-ffprobe"
+
 CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-doc"
 CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-htmlpages"
 CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-manpages"
@@ -71,7 +83,7 @@ CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-small"
 CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-postproc"
 if [ $ffmpeg5 -eq 0 ]; then
 	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-avresample"
-fi 
+fi
 CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-swscale-alpha"
 
 CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-hwaccels"
@@ -340,11 +352,12 @@ if [ "$COMPILE" ]; then
 		fi
 
 		#输出详细编译信息
-		echo ./configure /
-		echo "\t"--target-os=darwin
-		echo "\t"--arch=$ARCH
-		echo "\t"--cc="$CC"
-		echo "\t"--as="$AS"
+		echo $CWD/FFmpeg/$SOURCE
+		echo configure
+		echo --target-os=darwin
+		echo --arch=$ARCH
+		echo --cc="$CC"
+		echo --as="$AS"
 		echo $CONFIGURE_FLAGS
 		echo --extra-cflags $CFLAGS
 		echo --extra-ldflags $LDFLAGS
@@ -365,11 +378,7 @@ if [ "$COMPILE" ]; then
 			$ARCH_OPTIONS ||
 			exit 1
 
-		#获取机器CPU核心数 就可能加快编译
-		THREAD_COUNT=$(sysctl -n machdep.cpu.thread_count)
-		echo "make -j $THREAD_COUNT install $EXPORT || exit 1"
-
-		make -j$THREAD_COUNT install $EXPORT || exit 1
+		make -j install $EXPORT || exit 1
 
 		cd $CWD
 
@@ -396,6 +405,8 @@ if [ "$LIPO" ]; then
 		Create_Lipo="$Create_Lipo -output $FAT/lib/libx264.a"
 		echo $Create_Lipo
 		$($Create_Lipo)
+		echo cp -r $X264/include $FAT/include
+		cp -r $X264/include/* $FAT/include
 	fi
 
 	if [ "$X265" ]; then
@@ -406,6 +417,8 @@ if [ "$LIPO" ]; then
 		Create_Lipo="$Create_Lipo -output $FAT/lib/libx265.a"
 		echo $Create_Lipo
 		$($Create_Lipo)
+		echo cp -r $X265/include $FAT/include
+		cp -r $X265/include/* $FAT/include
 	fi
 
 	if [ "$FDK_AAC" ]; then
@@ -416,6 +429,8 @@ if [ "$LIPO" ]; then
 		Create_Lipo="$Create_Lipo -output $FAT/lib/libfdk-aac.a"
 		echo $Create_Lipo
 		$($Create_Lipo)
+		echo cp -r $FDK_AAC/include $FAT/include
+		cp -r $FDK_AAC/include/* $FAT/include
 	fi
 
 	if [ "$OpenSSL" ]; then
@@ -434,6 +449,8 @@ if [ "$LIPO" ]; then
 		Create_Lipo="$Create_Lipo -output $FAT/lib/libssl.a"
 		echo $Create_Lipo
 		$($Create_Lipo)
+		echo cp -r $OpenSSL/include $FAT/include
+		cp -r $OpenSSL/include/* $FAT/include
 	fi
 
 	if [ "$LAME" ]; then
@@ -444,6 +461,9 @@ if [ "$LIPO" ]; then
 		Create_Lipo="$Create_Lipo -output $FAT/lib/libmp3lame.a"
 		echo $Create_Lipo
 		$($Create_Lipo)
+
+		echo cp -r $LAME/lame $FAT/include
+		cp -r $LAME/include/* $FAT/include
 	fi
 
 	cd $CWD

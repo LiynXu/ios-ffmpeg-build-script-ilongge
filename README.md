@@ -55,8 +55,21 @@ chmod +x build-ffmpeg.sh
 
 ## 使用依赖
 
+不一定都需要，看实际的编译参数所开启的功能
+
+系统原生框架
+
+* AppKit
+* AVFoundation
+* CoreImage
 * VideotoolBox
 * Audiotoolbox
+* CoreFoundation
+* CoreMedia
+* CoreVideo
+
+系统库
+
 * libz.dylib
 * libbz2.dylib
 * libiconv.dylib
