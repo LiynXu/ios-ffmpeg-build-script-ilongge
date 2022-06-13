@@ -462,7 +462,7 @@ if [ "$LIPO" ]; then
 		echo $Create_Lipo
 		$($Create_Lipo)
 
-		echo cp -r $LAME/lame $FAT/include
+		echo cp -r $LAME/include $FAT/include
 		cp -r $LAME/include/* $FAT/include
 	fi
 
