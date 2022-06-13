@@ -8,20 +8,15 @@ cd $current_path
 
 # 单纯为了播放
 OnlyForPlayer=''
-
 # 静态库
 Static='y'
-
-# 都是已经编译过的插件的相对路径 没事别瞎改哦
-# X264=$(pwd)/extend/x264-ios
-# X265=$(pwd)/extend/x265-ios
-# X265=$(pwd)/extend/libx265-ios
-# FDK_AAC=$(pwd)/extend/fdk-aac-ios
-# OpenSSL=$(pwd)/extend/openssl-ios
-# LAME=$(pwd)/extend/lame-ios
+# 编译
+COMPILE='y'
+# 打包
+LIPO='y'
 
 # 编译FFmpeg版本
-FFMPEG_VERSION="4.4.2"
+FFMPEG_VERSION="4.3.3"
 
 if [[ $FFMPEG_VERSION != "" ]]; then
 	FFMPEG_VERSION=$FFMPEG_VERSION
@@ -31,9 +26,8 @@ fi
 # armv7     也抛弃吧
 # x86_64    Intel版Macbook的Xcode模拟器专用 M1版的Xcode模拟器是ARM64的
 # arm64     目前主流的ios设备架构
-
 # 选择编译架构
-ARCHS="armv7 arm64 x86_64" 
+ARCHS="armv7 arm64 x86_64"
 
 # 最低支持版本 2022年了建议iOS11起
 DEPLOYMENT_TARGET="9.0"
@@ -44,16 +38,24 @@ if [ $ffmpeg5 -eq 1 ]; then
 fi
 #移除低版本的Armv7支持
 ios11=$(echo $DEPLOYMENT_TARGET "11.0" | awk '{if($1 >= $2) print 1; else print 0;}')
-if [ $ios11 -eq 1 ]; then 
+if [ $ios11 -eq 1 ]; then
 	if [[ $ARCHS == *"armv7"* ]]; then
 		ARCHS=$(echo $ARCHS | sed 's/armv7//g')
 	fi
-fi 
+fi
 
 SOURCE="FFmpeg-$FFMPEG_VERSION"
 FAT=$(pwd)"/FFmpeg/FFmpeg-$FFMPEG_VERSION-iOS"
 SCRATCH=$(pwd)"/FFmpeg/scratch-$FFMPEG_VERSION"
 THIN=$(pwd)"/FFmpeg/thin-$FFMPEG_VERSION"
+
+# 都是已经编译过的插件的相对路径 没事别瞎改哦
+# X264=$(pwd)/extend/x264-ios
+# X265=$(pwd)/extend/x265-ios
+# X265=$(pwd)/extend/libx265-ios
+# FDK_AAC=$(pwd)/extend/fdk-aac-ios
+# OpenSSL=$(pwd)/extend/openssl-ios
+# LAME=$(pwd)/extend/lame-ios
 
 echo "Current_Path         = $(pwd)"
 echo "Build_FFmpeg_Version = $FFMPEG_VERSION"
@@ -239,9 +241,6 @@ if [ "$LAME" ]; then
 	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-libmp3lame"
 	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-encoder=libmp3lame"
 fi
-
-COMPILE="y"
-LIPO="y"
 
 if [ "$*" ]; then
 	if [ "$*" = "lipo" ]; then
@@ -468,7 +467,27 @@ if [ "$LIPO" ]; then
 
 	cd $CWD
 	cp -rf $THIN/$1/include $FAT
+
 fi
+
+function CopyFFTools() {
+
+	mkdir -p $FAT/fftools
+	cd FFmpeg/$SOURCE/fftools
+	echo cp *.c *.h $FAT/fftools
+	cp *.c *.h $FAT/fftools
+	echo rm $FAT/fftoolsffprobe.c $FAT/fftoolsffplay.c
+	rm $FAT/fftools/ffprobe.c $FAT/fftools/ffplay.c
+	for ARCH in $ARCHS; do
+		if [ -f $SCRATCH/$ARCH/config.h ]; then
+			echo cp $SCRATCH/$ARCH/config.h $FAT/fftools/config.h
+			cp $SCRATCH/$ARCH/config.h $FAT/fftools/config.h
+			break
+		fi
+	done
+}
+
+CopyFFTools
 
 echo "+++++++++++++++++++++++++++++++++++++++++++++++++++++"
 echo "+  Congratulations ! ! !                            +"
