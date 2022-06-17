@@ -1,4 +1,9 @@
 #!/bin/sh
+
+startDate=$(date) 
+startTimeStamp=$(date +%s) 
+echo '脚本开始于'$startDate
+customInfo='脚本开始于'$startDate
 current_path=$(
 	cd "$(dirname "$0")"
 	pwd
@@ -286,6 +291,7 @@ if [ "$COMPILE" ]; then
 
 	CWD=$(pwd)
 	for ARCH in $ARCHS; do
+		archStartTimeStamp=$(date +%s)
 		echo "building $ARCH..."
 		mkdir -p "$SCRATCH/$ARCH"
 		cd "$SCRATCH/$ARCH"
@@ -380,7 +386,10 @@ if [ "$COMPILE" ]; then
 		make -j install $EXPORT || exit 1
 
 		cd $CWD
-
+		archEndTimeStamp=$(date +%s)
+		arch_time="$ARCH 架构编译耗时：$(($archEndTimeStamp-$archStartTimeStamp))秒"
+		echo $arch_time
+		customInfo="$customInfo\n$arch_time"
 	done
 fi
 
@@ -493,3 +502,9 @@ echo "+++++++++++++++++++++++++++++++++++++++++++++++++++++"
 echo "+  Congratulations ! ! !                            +"
 echo "+  Build FFMpeg-iOS Success ! ! !                   +"
 echo "+++++++++++++++++++++++++++++++++++++++++++++++++++++"
+
+endDate=$(date)
+endTimeStamp=$(date +%s)
+customInfo="$customInfo\n脚本结束于$endDate"
+customInfo="$customInfo\n编译 FFMpeg-$FFMPEG_VERSION-iOS-$ARCHS 耗时：$(($endTimeStamp-$startTimeStamp))秒"
+echo $customInfo
