@@ -1,7 +1,7 @@
 #!/bin/sh
 
-startDate=$(date) 
-startTimeStamp=$(date +%s) 
+startDate=$(date)
+startTimeStamp=$(date +%s)
 echo '脚本开始于'$startDate
 customInfo='脚本开始于'$startDate
 current_path=$(
@@ -65,6 +65,20 @@ THIN=$(pwd)"/FFmpeg/thin-$FFMPEG_VERSION"
 echo "Current_Path         = $(pwd)"
 echo "Build_FFmpeg_Version = $FFMPEG_VERSION"
 echo "Build_FFmpeg_ARCHS   = $ARCHS"
+
+# 替换 AVMediaType 为 FF_AVMediaType 避免与 AVFoundation 内的 AVMediaType 冲突
+FF_AVMediaType_LIST=$(grep -rl "FF_AVMediaType" FFmpeg/$SOURCE)
+# FF_AVMediaType_LIST为空即可认为未完成替换过  不为空即可认为已经替换过
+if [[ -z $FF_AVMediaType_LIST ]]; then
+	AVMediaType_LIST=$(grep -rl " AVMediaType" FFmpeg/$SOURCE)
+	for FILE in $AVMediaType_LIST; do
+		# 加空格是为了防止错误替换AVFoundation的部分枚举值
+		echo sed -i '' "s/ AVMediaType/ FF_AVMediaType/g" ./$FILE
+		sed -i '' "s/ AVMediaType/ FF_AVMediaType/g" ./$FILE
+	done
+fi
+
+# CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-avfoundation"
 
 if [ "$Static" ]; then
 	CONFIGURE_FLAGS="$CONFIGURE_FLAGS --enable-static"
@@ -387,7 +401,7 @@ if [ "$COMPILE" ]; then
 
 		cd $CWD
 		archEndTimeStamp=$(date +%s)
-		arch_time="$ARCH 架构编译耗时：$(($archEndTimeStamp-$archStartTimeStamp))秒"
+		arch_time="$ARCH 架构编译耗时：$(($archEndTimeStamp - $archStartTimeStamp))秒"
 		echo $arch_time
 		customInfo="$customInfo\n$arch_time"
 	done
@@ -506,5 +520,5 @@ echo "+++++++++++++++++++++++++++++++++++++++++++++++++++++"
 endDate=$(date)
 endTimeStamp=$(date +%s)
 customInfo="$customInfo\n脚本结束于$endDate"
-customInfo="$customInfo\n编译 FFMpeg-$FFMPEG_VERSION-iOS-$ARCHS 耗时：$(($endTimeStamp-$startTimeStamp))秒"
+customInfo="$customInfo\n编译 FFMpeg-$FFMPEG_VERSION-iOS-$ARCHS 耗时：$(($endTimeStamp - $startTimeStamp))秒"
 echo $customInfo
