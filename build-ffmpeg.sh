@@ -12,7 +12,7 @@ echo $current_path
 cd $current_path
 
 # 单纯为了播放
-OnlyForPlayer=''
+OnlyForPlayer='y'
 # 静态库
 Static='y'
 # 编译
@@ -35,12 +35,14 @@ fi
 ARCHS="armv7 arm64 x86_64"
 
 # 最低支持版本 2022年了建议iOS11起
-DEPLOYMENT_TARGET="9.0"
+DEPLOYMENT_TARGET="11.0"
+
 # 5.0起编译不再支持iOS 13以下
 ffmpeg5=$(echo $FFMPEG_VERSION "5.0" | awk '{if($1 >= $2) print 1; else print 0;}')
 if [ $ffmpeg5 -eq 1 ]; then
 	DEPLOYMENT_TARGET="13.0"
 fi
+
 #移除低版本的Armv7支持
 ios11=$(echo $DEPLOYMENT_TARGET "11.0" | awk '{if($1 >= $2) print 1; else print 0;}')
 if [ $ios11 -eq 1 ]; then
@@ -53,7 +55,9 @@ SOURCE="FFmpeg-$FFMPEG_VERSION"
 FAT=$(pwd)"/FFmpeg/FFmpeg-$FFMPEG_VERSION-iOS"
 SCRATCH=$(pwd)"/FFmpeg/scratch-$FFMPEG_VERSION"
 THIN=$(pwd)"/FFmpeg/thin-$FFMPEG_VERSION"
-
+cd $current_path/FFmpeg/$SOURCE
+make clean
+cd $current_path
 # 都是已经编译过的插件的相对路径 没事别瞎改哦
 # X264=$(pwd)/extend/x264-ios
 # X265=$(pwd)/extend/x265-ios
@@ -61,10 +65,6 @@ THIN=$(pwd)"/FFmpeg/thin-$FFMPEG_VERSION"
 # FDK_AAC=$(pwd)/extend/fdk-aac-ios
 # OpenSSL=$(pwd)/extend/openssl-ios
 # LAME=$(pwd)/extend/lame-ios
-
-echo "Current_Path         = $(pwd)"
-echo "Build_FFmpeg_Version = $FFMPEG_VERSION"
-echo "Build_FFmpeg_ARCHS   = $ARCHS"
 
 # 替换 AVMediaType 为 FF_AVMediaType 避免与 AVFoundation 内的 AVMediaType 冲突
 FF_AVMediaType_LIST=$(grep -rl "FF_AVMediaType" FFmpeg/$SOURCE)
@@ -77,6 +77,10 @@ if [[ -z $FF_AVMediaType_LIST ]]; then
 		sed -i '' "s/ AVMediaType/ FF_AVMediaType/g" ./$FILE
 	done
 fi
+
+echo "Current_Path         = $(pwd)"
+echo "Build_FFmpeg_Version = $FFMPEG_VERSION"
+echo "Build_FFmpeg_ARCHS   = $ARCHS"
 
 # CONFIGURE_FLAGS="$CONFIGURE_FLAGS --disable-avfoundation"
 

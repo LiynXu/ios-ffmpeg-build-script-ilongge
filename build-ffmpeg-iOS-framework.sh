@@ -4,9 +4,9 @@
 
 
 
-FFMPEG_VERSION="5.0.1"
+FFMPEG_VERSION="4.3.3"
 export FFMPEG_VERSION
-ARCHS="arm64 x86_64" 
+ARCHS="arm64 x86_64"
 SCRATCH=$(pwd)/"FFMpeg/scratch-$FFMPEG_VERSION"
 HEADER_SUFFIX=".h"
 CURRENT_FOLDER=$(pwd)
@@ -135,7 +135,7 @@ function CreateInfoPlist() {
   DTXcodeBuild=$(defaults read $(xcode-select -p)/../info DTXcodeBuild)
   OS_BUILD_VERSION=$(sw_vers -buildVersion)
   cat >$OUTPUT_INFO_PLIST_FILE <<EOF
-  <?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
   <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
   <plist version="1.0">
   <dict>
@@ -187,7 +187,7 @@ function CreateInfoPlist() {
           <integer>2</integer>
           </array>
   </dict>
-  </plist>
+</plist>
 EOF
 }
 
